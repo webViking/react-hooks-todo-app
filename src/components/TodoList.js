@@ -1,32 +1,47 @@
-import React, { Fragment, useState, useEffect } from 'react'
+import React, { Fragment, useState, useEffect, useReducer } from 'react'
 import axios from 'axios'
 import './TodoList.scss'
+import Todo from './Todo'
 
 //dodac walidacje,
-//usuwanie,
 
 const TodoList = (props) => {
+
+
     const [inputIsValid, setInputValid] = useState(false)
     const [initTodoName, setTodoName] = useState('')
-    const [todoList, setTodoList] = useState([])
+    // const [todoList, setTodoList] = useState([])
 
     const updatedTodoNames = (e) => {
         setTodoName(e.target.value)
-    }
-    const inputIsValidHandler = (e) => {
-        if (e.target.value === "") {
+        if(e.target.value.trim() === ""){
             setInputValid(false)
-        } else {
+        }else{
             setInputValid(true)
         }
     }
+    const todoListReducer = (state, action) => {
+        switch (action.type) {
+            case "ADD":
+                return state.concat(action.payload)
+            case "REMOVE":
+                return state.filter((todo) => { return todo.id !== action.payload })
+            case "SET":
+                return action.payload
+            default:
+                return state
+        }
+    }
+    const [todoList, dispatch] = useReducer(todoListReducer, [])
+
+
     const addTask = (e) => {
         e.preventDefault()
         //tranforming into object
         axios.post('https://todoapp-4748e.firebaseio.com/tasks.json', { name: initTodoName })
-        .then(res => {
-            const todoItem = {id:res.data.name,name: initTodoName}
-            setTodoList(todoList.concat(todoItem))
+            .then(res => {
+                const todoItem = { id: res.data.name, name: initTodoName }
+                dispatch({ type: "ADD", payload: todoItem })
                 console.log(res)
             }).catch(err => {
                 console.log(err)
@@ -39,7 +54,7 @@ const TodoList = (props) => {
             for (let key in todoData) {
                 todos.push({ id: key, name: todoData[key].name })
             }
-            setTodoList(todos)
+            dispatch({ type: "SET", payload: todos })
             console.log(todos)
         }).catch(err => {
             console.log(err)
@@ -48,6 +63,11 @@ const TodoList = (props) => {
             console.log("Cleanup")
         }
     }, [])
+    const todoRemoveHandler = (todoId) => {
+        axios.delete(`https://todoapp-4748e.firebaseio.com/tasks/${todoId}.json`).then(() => {
+            dispatch({ type: "REMOVE", payload: todoId })
+        })
+    }
     return (
         <Fragment>
             <h3>What I need todo?</h3>
@@ -56,24 +76,13 @@ const TodoList = (props) => {
                     <div className="input-group">
                         <input type="text" onChange={updatedTodoNames} className="form-control" id="input" placeholder="Enter a task name" value={initTodoName} />
                         <span className="input-group-btn">
-                            <button onClick={addTask} className="btn btn-info" type="submit">Add a task</button>
+                            <button disabled={!inputIsValid} onClick={addTask} className="btn btn-info" type="submit">Add a task</button>
                         </span>
                     </div>
                 </form>
                 <div className="container__tasks">
                     <ul>
-                        {todoList.map(todo => {
-                            return (
-                                <li key={todo.id}>
-                                    <div className="input-group" style={{ marginBottom: '20px' }}>
-                                        <input type="text" className="form-control background-change" placeholder="Task name..." onChange={updatedTodoNames} value={todo.name} />
-                                        <span className="input-group-btn">
-                                            <button className="btn btn-danger delete-task-btn"><i className="fas fa-times"></i></button>
-                                        </span>
-                                    </div>
-                                </li>
-                            )
-                        })}
+                        <Todo items={todoList} change={updatedTodoNames} remove={todoRemoveHandler} />
                     </ul>
                 </div>
             </div>
