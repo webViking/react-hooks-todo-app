@@ -1,5 +1,5 @@
 # Todo App using React Hooks
-Todo application using react hooks
+Todo Application built with React Hooks
 
 
 
@@ -11,8 +11,7 @@ npm install
 npm start
 ```
 ## Build With
-
- * React
+ * React 16 +
  * React Hooks
  * Firebase
  * Axios

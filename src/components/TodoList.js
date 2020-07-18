@@ -37,7 +37,6 @@ const TodoList = (props) => {
 
     const addTask = (e) => {
         e.preventDefault()
-        //tranforming into object
         axios.post('https://todoapp-4748e.firebaseio.com/tasks.json', { name: initTodoName })
             .then(res => {
                 const todoItem = { id: res.data.name, name: initTodoName }
